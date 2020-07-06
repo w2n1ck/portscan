@@ -48,6 +48,7 @@ def nmap_scan(ip,port,arg):
                 title = get_title(scan_url)
                 service_name = '{}(title:{})'.format(service_name,title)
         
+        return '{}:{}/{}'.format(ip, port, service_name)
         print('\033[32m[ * ] {}:{}/{}\033[0m'.format(ip, port, service_name))
 
     except nmap.nmap.PortScannerError:
@@ -75,12 +76,18 @@ _ip = '94.191.42.{}'
 
 # temp_result = 'Scan Result:94.191.42.58:22, 9099'
 
+result = open('./temp_result.txt', 'a')
+
 def run(ip):
     if get_target_status(ip):
         print("\033[32m[ * ] {} is alive\033[0m".format(ip))
         ip = str(ip).encode("utf-8")
         temp_result = str(lib.Scan(ip))
         print('\033[33mScan Result:{}\033[0m'.format(temp_result))
+        if '(' in temp_result:
+            ip = temp_result.split('(')[0].strip()
+            host = temp_result.split('(')[1].split(')')[0]
+            print('Get host: {} ip:{}'.format(host,ip))
         if ',' in temp_result:
             port_list = temp_result.split(':')[1].split(',')
             # print(port_list)
@@ -91,14 +98,27 @@ def run(ip):
                 for i in range(len(port_list)):
                     port = str(port_list[i]).strip()
                     # print(port, int(port))
-                    nmap_scan(ip=ip, port=int(port), arg="-sS -Pn --version-all --open -p")
+                    scan_result = nmap_scan(ip=ip, port=int(port), arg="-sS -Pn --version-all --open -p")
+
         else:
             port_list = temp_result.split(':')[1]
             # print(port_list)
-            nmap_scan(ip=ip,port=port_list,arg="-sS -Pn --version-all -p")
+            scan_result = nmap_scan(ip=ip,port=port_list,arg="-sS -Pn --version-all -p")
+        if host:
+            result.write(scan_result + '-{}\n'.format(host))
+        else:
+            result.write(scan_result + '\n')
     else:
         print("\033[31m[ * ] {} is not alive\033[0m".format(ip))
 
+
+def is_ip(ip):
+    compile_rule = re.compile(r'\d+[\.]\d+[\.]\d+[\.]\d+')
+    match_list = re.findall(compile_rule, ip)
+    if match_list:
+        return True
+    else:
+        return False
 
 def get_ip_list(ip):
     '''
@@ -108,7 +128,7 @@ def get_ip_list(ip):
     ip: 127.0.0
     ip_list: 127.0.0.1, 127.0.0.2, 127.0.0.3 ... 127.0.0.254
 
-    ip: 127.0.0.1-127.0.0.20
+    ip: 127.0.0.1/127.0.0.20
     ip_list: 127.0.0.1, 127.0.0.2, 127.0.0.3 ... 127.0.0.20
 
     ip: ip.txt
@@ -124,41 +144,43 @@ def get_ip_list(ip):
         r'([a-zA-Z0-9][-_.a-zA-Z0-9]{0,61}[a-zA-Z0-9]))\.'
         r'([a-zA-Z]{2,13}|[a-zA-Z0-9-]{2,30}.[a-zA-Z]{2,3})$'
         )
-
-    if '-' in ip:
-        ip_range = ip.split('-')
-        ip_start = long(iptonum(ip_range[0]))
-        ip_end = long(iptonum(ip_range[1]))
-        ip_count = ip_end - ip_start
-        # print(ip_range,ip_start, ip_end, ip_count)
-        if ip_count >= 0 and ip_count <= 65536:
-            for ip_num in range(ip_start,ip_end+1):
-                ip_list.append(numtoip(ip_num))
-        else:
-            print('wrong format')
-    elif '.txt' in ip:
-        ip_file = open(ip, 'r')
-        for ip in ip_file:
-            ip_list.extend(get_ip_list(ip.strip()))
-        ip_file.close()
-    elif pattern.match(ip):
+    if not is_ip(ip):
         ip_list.append(ip)
     else:
-        ip_split=ip.split('.')
-        net = len(ip_split)
-        if net == 2:
-            for b in range(1,255):
-                for c in range(1,255):
-                    ip = "%s.%s.%d.%d"%(ip_split[0],ip_split[1],b,c)
-                    ip_list.append(ip)
-        elif net == 3:
-            for c in range(1,255):
-                ip = "%s.%s.%s.%d"%(ip_split[0],ip_split[1],ip_split[2],c)
-                ip_list.append(ip)
-        elif net ==4:
-            ip_list.append(ip)
+        if '-' in ip:
+            ip_range = ip.split('/')
+            ip_start = long(iptonum(ip_range[0]))
+            ip_end = long(iptonum(ip_range[1]))
+            ip_count = ip_end - ip_start
+            # print(ip_range,ip_start, ip_end, ip_count)
+            if ip_count >= 0 and ip_count <= 65536:
+                for ip_num in range(ip_start,ip_end+1):
+                    ip_list.append(numtoip(ip_num))
+            else:
+                print('{} wrong format'.format(ip))
+        elif '.txt' in ip:
+            ip_file = open(ip, 'r')
+            for ip in ip_file:
+                ip_list.extend(get_ip_list(ip.strip()))
+            ip_file.close()
+        # elif pattern.match(ip):
+        #     ip_list.append(ip)
         else:
-            print('wrong format')
+            ip_split=ip.split('.')
+            net = len(ip_split)
+            if net == 2:
+                for b in range(1,255):
+                    for c in range(1,255):
+                        ip = "%s.%s.%d.%d"%(ip_split[0],ip_split[1],b,c)
+                        ip_list.append(ip)
+            elif net == 3:
+                for c in range(1,255):
+                    ip = "%s.%s.%s.%d"%(ip_split[0],ip_split[1],ip_split[2],c)
+                    ip_list.append(ip)
+            elif net ==4:
+                ip_list.append(ip)
+            else:
+                print('{} wrong format'.format(ip))
     return ip_list
 
 
@@ -173,6 +195,7 @@ if __name__ == "__main__":
     ip_file.close()
     for i in range(len(ip_list)):
         print(ip_list[i])
-        # run(ip_list[i])
+        run(ip_list[i])
     e_time = time.time()
     print("\033[32m[ * ] Scan All Time is {}.\033[0m".format(e_time-s_time))
+    result.close()
