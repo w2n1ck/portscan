@@ -37,7 +37,7 @@ def nmap_scan(ip,port,arg):
         ret = nm.scan(ip, arguments=arg+str(port))
         # print(ret)
         service_name = ret['scan'][ip]['tcp'][int(port)]['name']
-        
+        print(ip,port,service_name)
         if 'http' in service_name  or service_name == 'sun-answerbook' or 'unknown' in service_name:
             if service_name == 'https' or service_name == 'https-alt':
                 scan_url = 'https://{}:{}'.format(ip,port)
@@ -48,8 +48,8 @@ def nmap_scan(ip,port,arg):
                 title = get_title(scan_url)
                 service_name = '{}(title:{})'.format(service_name,title)
         
-        return '{}:{}/{}'.format(ip, port, service_name)
         print('\033[32m[ * ] {}:{}/{}\033[0m'.format(ip, port, service_name))
+        return '{}:{}/{}'.format(ip, port, service_name)
 
     except nmap.nmap.PortScannerError:
         print("Please run -O method for root privileges")
