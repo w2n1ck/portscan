@@ -82,14 +82,13 @@ _ip = '94.191.42.{}'
 
 # temp_result = 'Scan Result:94.191.42.58:22, 9099'
 
-result = open('./temp_result.txt', 'a')
-
-
 def run(ip):
+    result = open('./temp_result.txt', 'a')
     if get_target_status(ip):
         print("\033[32m[ * ] {} is alive\033[0m".format(ip))
         ip = str(ip).encode("utf-8")
         temp_result = str(lib.Scan(ip))
+        host = ''
         print('\033[33mScan Result:{}\033[0m'.format(temp_result))
         if '(' in temp_result:
             ip = temp_result.split('(')[0].strip()
@@ -102,11 +101,11 @@ def run(ip):
             if port_num > 30:
                 print('Possible WAF/CND on target.')
             else:
-                for i in range(len(port_list)):
+                for i in range(port_num):
                     port = str(port_list[i]).strip()
-                    # print(port, int(port))
+                    # print(ip, port)
                     scan_result = nmap_scan(ip=ip, port=int(
-                        port), arg="-sS -Pn --version-all --open -p")
+                        port), arg="-sS -sV -Pn --version-all --open -p")
 
                     if host:
                         result.write(scan_result + ':{}\n'.format(host))
@@ -125,6 +124,8 @@ def run(ip):
                     result.write(scan_result + '\n')
     else:
         print("\033[31m[ * ] {} is not alive\033[0m".format(ip))
+    
+    result.close()
 
 
 def is_ip(ip):
@@ -213,11 +214,10 @@ if __name__ == "__main__":
     # print(ip_list)
     ip_file.close()
     for i in range(len(ip_list)):
-        print(ip_list[i])
+        # print(ip_list[i])
         try:
             run(ip_list[i])
         except:
             pass
     e_time = time.time()
     print("\033[32m[ * ] Scan All Time is {}.\033[0m".format(e_time - s_time))
-    result.close()
