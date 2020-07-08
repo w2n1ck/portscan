@@ -85,7 +85,7 @@ _ip = '94.191.42.{}'
 def run(ip):
     result = open('./temp_result.txt', 'a')
     if get_target_status(ip):
-        print("\033[32m[ * ] {} is alive\033[0m".format(ip))
+        print("\033[32m\n[ * ] {} is alive\033[0m".format(ip))
         ip = str(ip).encode("utf-8")
         temp_result = str(lib.Scan(ip))
         host = ''
@@ -104,8 +104,7 @@ def run(ip):
                 for i in range(port_num):
                     port = str(port_list[i]).strip()
                     # print(ip, port)
-                    scan_result = nmap_scan(ip=ip, port=int(
-                        port), arg="-sS -sV -Pn --version-all --open -p")
+                    scan_result = nmap_scan(ip=ip, port=int( port), arg="-sS -Pn --version-all --open -p")
 
                     if host:
                         result.write(scan_result + ':{}\n'.format(host))
@@ -116,8 +115,7 @@ def run(ip):
             if ":" in temp_result:
                 port_list = temp_result.split(':')[1]
                 # print(port_list)
-                scan_result = nmap_scan(
-                    ip=ip, port=port_list, arg="-sS -Pn --version-all -p")
+                scan_result = nmap_scan( ip=ip, port=port_list, arg="-sS -Pn --version-all --open -p")
                 if host:
                     result.write(scan_result + ':{}\n'.format(host))
                 else:
@@ -152,10 +150,8 @@ def get_ip_list(ip):
     ip_list: Same as above
     '''
     ip_list = []
-    iptonum = lambda x: sum([256**j * int(i)
-                             for j, i in enumerate(x.split('.')[::-1])])
-    numtoip = lambda x: '.'.join([str(x / (256**i) % 256)
-                                  for i in range(3, -1, -1)])
+    iptonum = lambda x: sum([256**j * int(i) for j, i in enumerate(x.split('.')[::-1])])
+    numtoip = lambda x: '.'.join([str(x / (256**i) % 256) for i in range(3, -1, -1)])
 
     pattern = re.compile(
         r'^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|'
@@ -194,8 +190,7 @@ def get_ip_list(ip):
                         ip_list.append(ip)
             elif net == 3:
                 for c in range(1, 255):
-                    ip = "%s.%s.%s.%d" % (
-                        ip_split[0], ip_split[1], ip_split[2], c)
+                    ip = "%s.%s.%s.%d" % (ip_split[0], ip_split[1], ip_split[2], c)
                     ip_list.append(ip)
             elif net == 4:
                 ip_list.append(ip)
