@@ -15,7 +15,7 @@ pip install pyping
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-lib = cdll.LoadLibrary(u'/root/tuhu/portscan/portscan.so')
+lib = cdll.LoadLibrary(u'/root/portscan/portscan.so')
 lib.Scan.argtypes = [c_char_p]
 lib.Scan.restype = c_char_p
 
@@ -83,7 +83,7 @@ _ip = '94.191.42.{}'
 # temp_result = 'Scan Result:94.191.42.58:22, 9099'
 
 def run(ip):
-    result = open('/root/tuhu/portscan/temp_result.txt', 'a')
+    result = open('/root/portscan/temp_result.txt', 'a')
     if get_target_status(ip):
         print("\033[32m\n[ * ] {} is alive.\033[0m".format(ip))
         ip = str(ip).encode("utf-8")
@@ -201,7 +201,7 @@ def get_ip_list(ip):
 
 if __name__ == "__main__":
     s_time = time.time()
-    ip_file = open('/root/tuhu/portscan/ip.txt', 'r')
+    ip_file = open('/root/portscan/ip.txt', 'r')
     ip_list = list()
     for _ in ip_file.readlines():
         _ip_list = get_ip_list(_.strip())
