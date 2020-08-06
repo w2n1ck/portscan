@@ -15,7 +15,7 @@ pip install pyping
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-lib = cdll.LoadLibrary(u'./portscan.so')
+lib = cdll.LoadLibrary(u'/root/tuhu/portscan/portscan.so')
 lib.Scan.argtypes = [c_char_p]
 lib.Scan.restype = c_char_p
 
@@ -30,9 +30,9 @@ def get_target_status(target):
         if r.ret_code == 0:
             return True
         else:
-            return False
+            return True
     except:
-        return False
+        return True
 
 
 nm = nmap.PortScanner()
@@ -44,7 +44,7 @@ def nmap_scan(ip, port, arg):
         # print(ret)
         service_name = ret['scan'][ip]['tcp'][int(port)]['name']
         # print(ip,port,service_name)
-        if 'http' in service_name or service_name == 'sun-answerbook' or 'unknown' in service_name:
+        if 'http' in service_name or service_name == 'sun-answerbook' or 'unknown' in service_name or not service_name:
             if service_name == 'https' or service_name == 'https-alt':
                 scan_url = 'https://{}:{}'.format(ip, port)
                 title = get_title(scan_url)
@@ -63,7 +63,7 @@ def nmap_scan(ip, port, arg):
 
 def get_title(scan_url):
     try:
-        r = requests.get(scan_url, timeout=5, verify=False)
+        r = requests.get(scan_url, timeout=5, verify=False, allow_redirects=True)
         r_detectencode = chardet.detect(r.content)
         # print(r_detectencode)
         actual_encode = r_detectencode['encoding']
@@ -83,9 +83,9 @@ _ip = '94.191.42.{}'
 # temp_result = 'Scan Result:94.191.42.58:22, 9099'
 
 def run(ip):
-    result = open('./temp_result.txt', 'a')
+    result = open('/root/tuhu/portscan/temp_result.txt', 'a')
     if get_target_status(ip):
-        print("\033[32m\n[ * ] {} is alive\033[0m".format(ip))
+        print("\033[32m\n[ * ] {} is alive.\033[0m".format(ip))
         ip = str(ip).encode("utf-8")
         temp_result = str(lib.Scan(ip))
         host = ''
@@ -104,7 +104,7 @@ def run(ip):
                 for i in range(port_num):
                     port = str(port_list[i]).strip()
                     # print(ip, port)
-                    scan_result = nmap_scan(ip=ip, port=int( port), arg="-sS -Pn --version-all --open -p")
+                    scan_result = nmap_scan(ip=ip, port=int( port), arg="-sS -sV -A -Pn --version-all --open -p")
 
                     if host:
                         result.write(scan_result + ':{}\n'.format(host))
@@ -115,7 +115,7 @@ def run(ip):
             if ":" in temp_result:
                 port_list = temp_result.split(':')[1]
                 # print(port_list)
-                scan_result = nmap_scan( ip=ip, port=port_list, arg="-sS -Pn --version-all --open -p")
+                scan_result = nmap_scan( ip=ip, port=port_list, arg="-sS -sV -A -Pn --version-all --open -p")
                 if host:
                     result.write(scan_result + ':{}\n'.format(host))
                 else:
@@ -143,7 +143,7 @@ def get_ip_list(ip):
     ip: 127.0.0
     ip_list: 127.0.0.1, 127.0.0.2, 127.0.0.3 ... 127.0.0.254
 
-    ip: 127.0.0.1/127.0.0.20
+    ip: 127.0.0.1-127.0.0.20
     ip_list: 127.0.0.1, 127.0.0.2, 127.0.0.3 ... 127.0.0.20
 
     ip: ip.txt
@@ -163,7 +163,7 @@ def get_ip_list(ip):
         ip_list.append(ip)
     else:
         if '-' in ip:
-            ip_range = ip.split('/')
+            ip_range = ip.split('-')
             ip_start = long(iptonum(ip_range[0]))
             ip_end = long(iptonum(ip_range[1]))
             ip_count = ip_end - ip_start
@@ -201,7 +201,7 @@ def get_ip_list(ip):
 
 if __name__ == "__main__":
     s_time = time.time()
-    ip_file = open('./ip.txt', 'r')
+    ip_file = open('/root/tuhu/portscan/ip.txt', 'r')
     ip_list = list()
     for _ in ip_file.readlines():
         _ip_list = get_ip_list(_.strip())
